@@ -19,9 +19,7 @@ class ShippingTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_name = "shipping_test"
-        self.database_path = "postgresql://postgres:sqledu123@{}/{}".format(
-            'localhost:5432', self.database_name)
+        self.database_path = os.environ.get('TEST_DATABASE')
         setup_db(self.app, self.database_path)
 
         self.supervisor_header = {
@@ -59,6 +57,7 @@ class ShippingTestCase(unittest.TestCase):
 
 # Test GET Requests
 # -----------------
+
     def test_get_shipments(self):
         res = self.client().get('/shipments', headers=self.packager_header)
         data = json.loads(res.data)
@@ -112,7 +111,6 @@ class ShippingTestCase(unittest.TestCase):
         self.assertTrue(data['success'], True)
         self.assertTrue(data['carrier'], True)
 
-
 # Test PATCH requests
 # -------------------
 
@@ -129,7 +127,8 @@ class ShippingTestCase(unittest.TestCase):
 
     def test_edit_carrier(self):
         res = self.client().patch('/carriers/1',
-                                  json={"name": "Stephan Courier"}, headers=self.supervisor_header)
+                                  json={"name": "Stephan Courier"},
+                                  headers=self.supervisor_header)
 
         data = json.loads(res.data)
 
@@ -149,17 +148,16 @@ class ShippingTestCase(unittest.TestCase):
         self.assertTrue(data['success'], True)
         self.assertTrue(data['shipment'], True)
 
-
 # Test DELETE requests
 # -------------------
 
     def test_delete_shipment(self):
-        res = self.client().delete('/shipments/12', headers=self.supervisor_header)
+        res = self.client().delete('/shipments/12',
+                                   headers=self.supervisor_header)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertTrue(data['success'], True)
-
 
 # Test Error Handling in POST requests
 # ------------------------------------
@@ -167,7 +165,8 @@ class ShippingTestCase(unittest.TestCase):
     def test_422_packager(self):
         """Error because of missing data"""
         res = self.client().post('/packagers',
-                                 json={"last_name": "Bingo"}, headers=self.supervisor_header)
+                                 json={"last_name": "Bingo"},
+                                 headers=self.supervisor_header)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 422)
@@ -177,7 +176,8 @@ class ShippingTestCase(unittest.TestCase):
     def test_422_carrier(self):
         """Error because of missing data"""
         res = self.client().post('/carriers',
-                                 json={"name": ""}, headers=self.supervisor_header)
+                                 json={"name": ""},
+                                 headers=self.supervisor_header)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 422)
@@ -255,7 +255,8 @@ class ShippingTestCase(unittest.TestCase):
 
     def test_404_edit_carrier(self):
         res = self.client().patch('/carriers/8000',
-                                  json={"name": "Stephan Courier"}, headers=self.supervisor_header)
+                                  json={"name": "Stephan Courier"},
+                                  headers=self.supervisor_header)
 
         data = json.loads(res.data)
 
@@ -294,7 +295,8 @@ class ShippingTestCase(unittest.TestCase):
         self.assertNotIn('shipment', data)
 
     def test_401_delete_shipment(self):
-        res = self.client().delete('/shipments/5', headers=self.packager_header)
+        res = self.client().delete('/shipments/5',
+                                   headers=self.packager_header)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 401)

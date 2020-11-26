@@ -1,9 +1,19 @@
 import os
-from flask import Flask, request, abort, jsonify
+from flask import (
+    Flask,
+    request,
+    abort,
+    jsonify
+)
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
-from database.models import setup_db, Shipment, Packager, Carrier
+from database.models import (
+    setup_db,
+    Shipment,
+    Packager,
+    Carrier
+)
 from auth.auth import AuthError, requires_auth
 
 
@@ -21,17 +31,23 @@ def create_app(test_config=None):
                              'GET,PUT,POST,DELETE,OPTIONS')
         return response
 
+# ------------------------
+# Error Handlers
+# ------------------------
+
     """
     Home Page
     """
     @app.route('/', methods=['GET'])
     def homepage():
+        '''Welcome Page. To be eventually
+           replaced with a nicer HTML frontend.'''
         greeting = 'Welcome to the Daily Shipping App!'
         if os.environ.get('EXCITED'):
             greeting = 'Hurrah! You got to the home of the Daily Shipping App!'
         return jsonify({
-             "success": True,
-             "message": greeting
+            "success": True,
+            "message": greeting
         })
 
     """
@@ -40,6 +56,8 @@ def create_app(test_config=None):
     @app.route('/packagers', methods=['GET'])
     @requires_auth('get:packagers')
     def get_packagers(jwt):
+        '''Fetches the list of packagers'''
+
         packagers = [p.format() for p in Packager.query.all()]
 
         if not packagers:
@@ -53,10 +71,13 @@ def create_app(test_config=None):
     @app.route('/packagers', methods=['POST'])
     @requires_auth('post:packager')
     def new_packager(jwt):
+        '''Creates a new Packager.
+           Mandatory fields: first_name, initials
+        '''
         body = request.get_json()
-        first_name = body.get('first_name', None)
-        last_name = body.get('last_name', None)
-        initials = body.get('initials', None)
+        first_name = body.get('first_name')
+        last_name = body.get('last_name')
+        initials = body.get('initials')
         active = body.get('active', True)
 
         if not(first_name and initials):
@@ -68,7 +89,8 @@ def create_app(test_config=None):
 
         try:
             packager = Packager(
-                first_name=first_name, last_name=last_name, initials=initials, active=active)
+                first_name=first_name, last_name=last_name,
+                initials=initials, active=active)
             packager.insert()
 
             return jsonify({
@@ -76,12 +98,16 @@ def create_app(test_config=None):
                 'packager': packager.format()
             })
 
-        except:
+        except Exception:
+            raise()
             abort(500)
 
     @app.route('/packagers/<int:packager_id>', methods=['PATCH'])
     @requires_auth('patch:packager')
     def edit_packager(jwt, packager_id):
+        '''Modifies Packager's data
+           JSON payload doesn't require all fields to be sent.
+        '''
         packager = Packager.query.filter_by(id=packager_id).one_or_none()
         if packager is None:
             abort(404)
@@ -100,7 +126,7 @@ def create_app(test_config=None):
                 'packager': packager.format()
             })
 
-        except:
+        except Exception:
             abort(422)
 
     """
@@ -109,6 +135,8 @@ def create_app(test_config=None):
     @app.route('/carriers', methods=['GET'])
     @requires_auth('get:carriers')
     def get_carriers(jwt):
+        '''Fetches the list of carriers'''
+
         carriers = [c.format() for c in Carrier.query.all()]
 
         if not carriers:
@@ -122,8 +150,11 @@ def create_app(test_config=None):
     @app.route('/carriers', methods=['POST'])
     @requires_auth('post:carrier')
     def new_carrier(jwt):
+        '''Creates a new Carrier.
+           Mandatory fields: name
+        '''
         body = request.get_json()
-        newname = body.get('name', None)
+        newname = body.get('name')
 
         if not newname:
             abort(422)
@@ -137,18 +168,20 @@ def create_app(test_config=None):
                 "carrier": carrier.format()
             })
 
-        except:
+        except Exception:
             abort(500)
 
     @app.route('/carriers/<int:carrier_id>', methods=['PATCH'])
     @requires_auth('patch:carrier')
     def edit_carrier(jwt, carrier_id):
+        '''Modifies Carrier's data'''
+
         carrier = Carrier.query.filter_by(id=carrier_id).one_or_none()
         if carrier is None:
             abort(404)
         try:
             body = request.get_json()
-            edited_name = body.get('name', None)
+            edited_name = body.get('name')
 
             carrier.name = edited_name
             carrier.update()
@@ -158,7 +191,7 @@ def create_app(test_config=None):
                 'carrier': carrier.format()
             })
 
-        except:
+        except Exception:
             abort(422)
 
     """
@@ -167,6 +200,7 @@ def create_app(test_config=None):
     @app.route('/shipments', methods=['GET'])
     @requires_auth('get:shipments')
     def get_shipments(jwt):
+        '''Fetches the list of shipments'''
         shipments = [s.format() for s in Shipment.query.all()]
 
         if not shipments:
@@ -180,18 +214,27 @@ def create_app(test_config=None):
     @app.route('/shipments', methods=['POST'])
     @requires_auth('post:shipments')
     def new_shipment(jwt):
+        '''Creates a new shipment.
+           Mandatory fields:
+           - reference
+           - carrier_id
+           - packages
+           - weight
+           - packaged_by
+           create_date defaults to current date/time
+        '''
         body = request.get_json()
         data = {
-            'reference': body.get('reference', None),
-            'carrier_id': body.get('carrier_id', None),
-            'packages': body.get('packages', None),
-            'weight': body.get('weight', None),
-            'tracking': body.get('tracking', None),
-            'packaged_by': body.get('packaged_by', None),
-            'create_date': body.get('create_date', None)
+            'reference': body.get('reference'),
+            'carrier_id': body.get('carrier_id'),
+            'packages': body.get('packages'),
+            'weight': body.get('weight'),
+            'tracking': body.get('tracking'),
+            'packaged_by': body.get('packaged_by'),
+            'create_date': body.get('create_date')
         }
 
-        # Check which mandatory fields have a null values:
+        # Check which mandatory fields have null values:
         fields = data.copy()
         fields.pop('tracking')
         fields.pop('create_date')
@@ -205,20 +248,29 @@ def create_app(test_config=None):
             }), 422
 
         try:
-            shipment = Shipment(reference=data['reference'], carrier_id=data['carrier_id'], packages=data['packages'],
-                                weight=data['weight'], tracking=data['tracking'], packaged_by=data['packaged_by'], create_date=data['create_date'])
+            shipment = Shipment(reference=data['reference'],
+                                carrier_id=data['carrier_id'],
+                                packages=data['packages'],
+                                weight=data['weight'],
+                                tracking=data['tracking'],
+                                packaged_by=data['packaged_by'],
+                                create_date=data['create_date'])
             shipment.insert()
 
             return jsonify({
                 'success': True,
                 'shipment': shipment.format()
             })
-        except:
+        except Exception:
             abort(400)
 
     @app.route('/shipments/<int:shipment_id>', methods=['PATCH'])
     @requires_auth('patch:shipments')
     def edit_shipment(jwt, shipment_id):
+        '''Modifies shipment data.
+           The most common use is to add missing tracking numbers
+           JSON payload doesn't require all fields to be sent.
+           '''
         shipment = Shipment.query.filter_by(id=shipment_id).one_or_none()
         if shipment is None:
             abort(404)
@@ -240,12 +292,13 @@ def create_app(test_config=None):
                 'shipment': shipment.format()
             })
 
-        except:
+        except Exception:
             abort(422)
 
     @app.route('/shipments/<int:shipment_id>', methods=['DELETE'])
     @requires_auth('delete:shipments')
     def del_shipment(jwt, shipment_id):
+        '''Deletes a shipment'''
         shipment = Shipment.query.filter_by(id=shipment_id).one_or_none()
         if shipment is None:
             abort(404)
@@ -258,14 +311,12 @@ def create_app(test_config=None):
                 'deleted': shipment.format()
             })
 
-        except:
+        except Exception:
             abort(422)
-
 
 # ------------------------
 # Error Handlers
 # ------------------------
-
 
     @app.errorhandler(400)
     def bad_request(error):

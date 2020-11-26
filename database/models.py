@@ -77,7 +77,7 @@ class Shipment(db.Model):
 
 
 '''
-Carrier: 
+Carrier:
 
 '''
 
@@ -139,9 +139,4 @@ class Packager(db.Model):
             'id': self.id,
             'Packager Initials': self.initials,
             'is_active': self.active
-
-
         }
-
-# if __name__ == '__main__':
-#     setup_db(app)
