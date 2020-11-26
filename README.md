@@ -24,19 +24,32 @@ This is a Python/Flask app that is suitable to be deployed on the Heroku platfor
  - SQLAlchemy
  - Jose
  - Gunicorn
+ - [PostgreSQL](https://www.postgresql.org/download/)
+
 
 Install dependencies by running:
 ```bash
 pip install -r requirements.txt
 ```
+Create a database called "shipping":
+```
+createdb shipping
+```
+
+Create tables and populate with sample data:
+```
+psql shipping < shipping.psql
+```
+
 ### Running the server
-Edit the configuration file **setup.sh** with the proper variables. The run these commands:
+- Edit the configuration file **setup.sh** with the proper variables. The run these commands:
 ```bash
 source setup.sh
 export FLASK_APP=app.py
 export FLASK_ENV=development
 flask run
 ```
+
 #### Authentication
 The authentication system used for this project is Auth0. The **setup.sh** contains the required authorization tokens for the app:
  - SUPERVISORJWT has the jwt token for the supervisor role
@@ -104,12 +117,11 @@ The authentication system used for this project is Auth0. The **setup.sh** conta
 
 
 ### Tests
-Running tests:
+Running tests (Locally)
+Make sure PostgreSQL is installed.
+- shipping.psql contains database creation commands and sample data
 ```
+createdb shipping_test
+psql shipping_test < shipping.psql
 python test_app.py
 ```
-
-
-
-
-
