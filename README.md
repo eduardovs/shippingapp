@@ -24,10 +24,10 @@ This is a Python/Flask app that is suitable to be deployed on the Heroku platfor
  - SQLAlchemy
  - Jose
  - Gunicorn
- - [PostgreSQL](https://www.postgresql.org/download/)
+ - PostgreSQL. Installation instructions can be found [here.](https://www.postgresql.org/download/)
 
 
-Install dependencies by running:
+Install python dependencies by running:
 ```bash
 pip install -r requirements.txt
 ```
