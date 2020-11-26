@@ -22,6 +22,19 @@ def create_app(test_config=None):
         return response
 
     """
+    Home Page
+    """
+    @app.route('/', methods=['GET'])
+    def homepage():
+        greeting = 'Welcome to the Daily Shipping App!'
+        if os.environ.get('EXCITED'):
+            greeting = 'Hurrah! You got to the home of the Daily Shipping App!'
+        return jsonify({
+             "success": True,
+             "message": greeting
+        })
+
+    """
     Packagers
     """
     @app.route('/packagers', methods=['GET'])
@@ -252,6 +265,7 @@ def create_app(test_config=None):
 # ------------------------
 # Error Handlers
 # ------------------------
+
 
     @app.errorhandler(400)
     def bad_request(error):

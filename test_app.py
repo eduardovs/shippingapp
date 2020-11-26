@@ -31,11 +31,11 @@ class ShippingTestCase(unittest.TestCase):
 
         self.new_shipment = {
             "reference": 97900,
-            "carrier_id": 6,
+            "carrier_id": 2,
             "packages": 2,
             "weight": 40,
             "tracking": "QWE232323",
-            "packaged_by": 3,
+            "packaged_by": 1,
             "create_date": "2020-11-17"
         }
 
@@ -128,7 +128,7 @@ class ShippingTestCase(unittest.TestCase):
         self.assertTrue(data['packager'], True)
 
     def test_edit_carrier(self):
-        res = self.client().patch('/carriers/4',
+        res = self.client().patch('/carriers/1',
                                   json={"name": "Stephan Courier"}, headers=self.supervisor_header)
 
         data = json.loads(res.data)
@@ -138,7 +138,7 @@ class ShippingTestCase(unittest.TestCase):
         self.assertTrue(data['carrier'], True)
 
     def test_edit_shipment(self):
-        res = self.client().patch('/shipments/2',
+        res = self.client().patch('/shipments/18',
                                   json={"packages": 7,
                                         "weight": 35,
                                         "tracking": "PATCHOK25000400"
@@ -154,7 +154,7 @@ class ShippingTestCase(unittest.TestCase):
 # -------------------
 
     def test_delete_shipment(self):
-        res = self.client().delete('/shipments/5', headers=self.supervisor_header)
+        res = self.client().delete('/shipments/12', headers=self.supervisor_header)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -214,6 +214,25 @@ class ShippingTestCase(unittest.TestCase):
                                      "tracking": "QWE232323",
                                      "packaged_by": 555,
                                      "create_date": "2020-11-22"
+                                 }, headers=self.supervisor_header)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(data['success'])
+        self.assertNotIn('shipment', data)
+
+    def test_400_negative_value(self):
+        """Sending negative values
+        """
+        res = self.client().post('/shipments',
+                                 json={
+                                     "reference": 97999,
+                                     "carrier_id": 1,
+                                     "packages": -2,
+                                     "weight": -4,
+                                     "tracking": "QWE23232300",
+                                     "packaged_by": 555,
+                                     "create_date": "2020-11-23"
                                  }, headers=self.supervisor_header)
         data = json.loads(res.data)
 
